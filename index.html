@@ -4,23 +4,26 @@
 <meta charset="UTF-8">
 <title>Math Game</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+  #version { position: absolute; top: 10px; right: 20px; font-size: 14px; color: #555; }
   #game, #result, #links, #progress { display: none; margin-top: 20px; }
   .wrong { color: red; }
   .bar-container { width: 100%; background: #ddd; margin: 5px 0; height: 25px; border-radius: 5px; overflow: hidden; }
   .bar { height: 100%; text-align: center; color: white; line-height: 25px; white-space: nowrap; }
   .correct-bar { background: green; }
   .incorrect-bar { background: red; }
+  #question { font-size: 40px; font-weight: bold; color: #0077cc; }
 </style>
 </head>
 <body>
-<h1 id="title">Math Game 2025-08-21 v 1.0.0</h1>
+<h1 id="title">Math Game</h1>
+<div id="version">2025-08-19 v1.0.0</div>
 
 <label id="numQuestionsLabel">Number of questions:</label>
 <input type="number" id="numQuestions" min="1" value="5"><br><br>
 
 <label id="maxNumberLabel">Maximum number:</label>
-<input type="number" id="maxNumber" min="2" value="12"><br><br>
+<input type="number" id="maxNumber" min="3" value="12"><br><br>
 
 <div>
   <input type="checkbox" id="addition"> <label for="addition" id="additionLabel">Addition</label><br>
@@ -62,10 +65,10 @@
   <ul>
       <li><a href="https://www.mathsisfun.com/" target="_blank">Math is Fun</a></li>
       <li><a href="https://www.khanacademy.org/" target="_blank">Khan Academy</a></li>
-      <li><a href="https://www.smbgames.be/super-mario-1.php" target="_blank">Super Mario></a></li>
+      <li><a href="https://www.smbgames.be/super-mario-1.php" target="_blank">Super Mario</a></li>
       <li><a href="https://www.allsonicgames.net/sonic-the-hedgehog-snes.php" target="_blank">Sonic</a></li>
       <li><a href="https://www.coolmathgames.com/" target="_blank">Cool Math Games</a></li>
-      <li><a href="https://www.mathsisfun.com/games/plumber-game.html" target="_blank">https://www.mathsisfun.com/games/plumber-game.html</a></li>
+      <li><a href="https://www.mathsisfun.com/games/plumber-game.html" target="_blank">Plumber Game</a></li>
   </ul>
 </div>
 
@@ -92,9 +95,10 @@ function generateProblems(n, maxNum, ops) {
       if (op === '-') { if (a === b) continue; res = a - b; }
       if (op === '*') res = a * b;
       if (op === '/') {
-        b = rand([...Array(maxNum - 1).keys()].map(x => x + 2).filter(x => a % x === 0));
-        if (!b) continue;
-        if (a === b) continue;
+        let divisors = Array.from({length: maxNum - 1}, (_, k) => k + 2).filter(x => a % x === 0);
+        divisors = divisors.filter(x => x !== a); // avoid a/a
+        if (!divisors.length) continue;
+        b = rand(divisors);
         res = a / b;
       }
     } while (res === undefined);
@@ -124,6 +128,10 @@ updateLanguage();
 document.getElementById("startBtn").addEventListener("click", () => {
   const n = +document.getElementById("numQuestions").value;
   const maxNum = +document.getElementById("maxNumber").value;
+  if (maxNum < 3) {
+    alert("Maximum number must be at least 3.");
+    return;
+  }
   const ops = [];
   if (document.getElementById("addition").checked) ops.push('+');
   if (document.getElementById("subtraction").checked) ops.push('-');
