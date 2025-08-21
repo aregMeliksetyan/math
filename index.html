@@ -40,7 +40,7 @@
 <div>
   <input type="checkbox" id="addition"> <label for="addition" id="additionLabel">Addition</label><br>
   <input type="checkbox" id="subtraction"> <label for="subtraction" id="subtractionLabel">Subtraction</label><br>
-  <input type="checkbox" id="multiplication"> <label for="multiplication" id="multiplicationLabel">Multiplication</label><br>
+  <input type="checkbox" id="multiplication" checked> <label for="multiplication" id="multiplicationLabel">Multiplication</label><br>
   <input type="checkbox" id="division"> <label for="division" id="divisionLabel">Division</label><br>
 </div>
 <br>
@@ -162,7 +162,7 @@ function nextQuestion() {
     document.getElementById("result").innerText =
       translations[document.getElementById("language").value].finished;
     document.getElementById("links").style.display = "block";
-    launchFireworks(5000); // 5 seconds show
+    launchFireworks(2500); // 5 seconds show
     return;
   }
   document.getElementById("question").innerText = problems[current].q;
