@@ -155,7 +155,6 @@ function nextQuestion() {
   document.getElementById("question").innerText = problems[current].q;
   document.getElementById("answer").value = "";
   document.getElementById("feedback").innerText = "";
-  document.getElementById("status").innerText = `✔ ${correct} | ✘ ${incorrect} | ➡ ${problems.length - current}`;
 }
 
 function updateBars() {
