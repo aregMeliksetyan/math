@@ -4,20 +4,30 @@
 <meta charset="UTF-8">
 <title>Math Game</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+  body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; overflow-x: hidden; }
   #version { position: absolute; top: 10px; right: 20px; font-size: 14px; color: #555; }
   #game, #result, #links, #progress { display: none; margin-top: 20px; }
   .wrong { color: red; }
   .bar-container { width: 100%; background: #ddd; margin: 5px 0; height: 25px; border-radius: 5px; overflow: hidden; }
   .bar { height: 100%; text-align: center; color: white; line-height: 25px; white-space: nowrap; }
   .correct-bar { background: green; }
-  /* .incorrect-bar removed (no longer used) */
   #question { font-size: 40px; font-weight: bold; color: #0077cc; }
+  #fireworksCanvas { 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; 
+    height: 100%; 
+    pointer-events: none; 
+    z-index: 9999; 
+    display: none;
+  }
 </style>
 </head>
 <body>
+<canvas id="fireworksCanvas"></canvas>
+
 <h1 id="title">Math Game</h1>
-<div id="version">2025-08-21 v1.0.1</div>
+<div id="version">2025-08-21 v1.0.2</div>
 
 <label id="numQuestionsLabel">Number of questions:</label>
 <input type="number" id="numQuestions" min="1" value="5"><br><br>
@@ -53,8 +63,6 @@
   <div id="progress">
     <div>✅ <span id="correctCount">0</span></div>
     <div class="bar-container"><div class="bar correct-bar" id="correctBar" style="width:0%">0%</div></div>
-
-    <!-- Keep incorrect count text, remove bar -->
     <div>❌ <span id="incorrectCount">0</span></div>
   </div>
 </div>
@@ -96,7 +104,7 @@ function generateProblems(n, maxNum, ops) {
       if (op === '*') res = a * b;
       if (op === '/') {
         let divisors = Array.from({length: maxNum - 1}, (_, k) => k + 2).filter(x => a % x === 0);
-        divisors = divisors.filter(x => x !== a); // avoid a/a
+        divisors = divisors.filter(x => x !== a);
         if (!divisors.length) continue;
         b = rand(divisors);
         res = a / b;
@@ -150,6 +158,7 @@ function nextQuestion() {
   if (current >= problems.length) {
     document.getElementById("result").innerText = translations[document.getElementById("language").value].finished;
     document.getElementById("links").style.display = "block";
+    launchFireworks();
     return;
   }
   document.getElementById("question").innerText = problems[current].q;
@@ -162,7 +171,7 @@ function updateBars() {
   document.getElementById("correctBar").style.width = correctPct + "%";
   document.getElementById("correctBar").innerText = Math.round(correctPct) + "%";
   document.getElementById("correctCount").innerText = correct;
-  document.getElementById("incorrectCount").innerText = incorrect; // keep count only
+  document.getElementById("incorrectCount").innerText = incorrect;
 }
 
 function checkAnswer() {
@@ -183,6 +192,64 @@ function checkAnswer() {
 
 document.getElementById("checkBtn").addEventListener("click", checkAnswer);
 document.getElementById("answer").addEventListener("keypress", e => { if (e.key === "Enter") checkAnswer(); });
+
+/* ---------------- FIREWORKS ---------------- */
+function launchFireworks() {
+  const canvas = document.getElementById("fireworksCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.display = "block";
+
+  const fireworks = [];
+  const colors = ["#ff4b5c", "#ffcc00", "#4bff50", "#00cfff", "#ff8c00", "#ff00ff"];
+
+  function createFirework() {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * (canvas.height / 2);
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    for (let i = 0; i < 30; i++) {
+      fireworks.push({
+        x, y,
+        angle: (Math.PI * 2 * i) / 30,
+        speed: Math.random() * 4 + 2,
+        radius: 2,
+        alpha: 1,
+        color
+      });
+    }
+  }
+
+  function animate() {
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    fireworks.forEach((p, i) => {
+      p.x += Math.cos(p.angle) * p.speed;
+      p.y += Math.sin(p.angle) * p.speed + 0.5;
+      p.alpha -= 0.02;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${hexToRgb(p.color)},${p.alpha})`;
+      ctx.fill();
+    });
+    for (let i = fireworks.length - 1; i >= 0; i--) {
+      if (fireworks[i].alpha <= 0) fireworks.splice(i, 1);
+    }
+    if (fireworks.length > 0) {
+      requestAnimationFrame(animate);
+    } else {
+      canvas.style.display = "none";
+    }
+  }
+
+  function hexToRgb(hex) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255].join(",");
+  }
+
+  for (let i = 0; i < 5; i++) setTimeout(createFirework, i * 500);
+  animate();
+}
 </script>
 </body>
 </html>
