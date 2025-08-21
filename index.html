@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Math Game</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  #game, #result, #links, #progress { display: none; margin-top: 20px; }
+  .wrong { color: red; }
+  .bar-container { width: 100%; background: #ddd; margin: 5px 0; height: 25px; border-radius: 5px; overflow: hidden; }
+  .bar { height: 100%; text-align: center; color: white; line-height: 25px; white-space: nowrap; }
+  .correct-bar { background: green; }
+  .incorrect-bar { background: red; }
+</style>
+</head>
+<body>
+<h1 id="title">Math Game</h1>
+
+<label id="numQuestionsLabel">Number of questions:</label>
+<input type="number" id="numQuestions" min="1" value="5"><br><br>
+
+<label id="maxNumberLabel">Maximum number:</label>
+<input type="number" id="maxNumber" min="2" value="12"><br><br>
+
+<div>
+  <input type="checkbox" id="addition"> <label for="addition" id="additionLabel">Addition</label><br>
+  <input type="checkbox" id="subtraction"> <label for="subtraction" id="subtractionLabel">Subtraction</label><br>
+  <input type="checkbox" id="multiplication"> <label for="multiplication" id="multiplicationLabel">Multiplication</label><br>
+  <input type="checkbox" id="division"> <label for="division" id="divisionLabel">Division</label><br>
+</div>
+<br>
+
+<label id="languageLabel">Language:</label>
+<select id="language">
+  <option value="en">English</option>
+  <option value="fr">Français</option>
+  <option value="hy">Հայերեն</option>
+  <option value="ru">Русский</option>
+</select><br><br>
+
+<button id="startBtn">Start</button>
+
+<div id="game">
+  <div id="status"></div>
+  <p id="question"></p>
+  <input type="number" id="answer">
+  <button id="checkBtn">Check</button>
+  <p id="feedback"></p>
+
+  <div id="progress">
+    <div>✅ <span id="correctCount">0</span></div>
+    <div class="bar-container"><div class="bar correct-bar" id="correctBar" style="width:0%">0%</div></div>
+    
+    <div>❌ <span id="incorrectCount">0</span></div>
+    <div class="bar-container"><div class="bar incorrect-bar" id="incorrectBar" style="width:0%">0%</div></div>
+  </div>
+</div>
+
+<div id="result"></div>
+<div id="links">
+  <h3>Links:</h3>
+  <ul>
+      <li><a href="https://www.mathsisfun.com/" target="_blank">Math is Fun</a></li>
+      <li><a href="https://www.khanacademy.org/" target="_blank">Khan Academy</a></li>
+      <li><a href="https://www.smbgames.be/super-mario-1.php" target="_blank">Super Mario></a></li>
+      <li><a href="https://www.allsonicgames.net/sonic-the-hedgehog-snes.php" target="_blank">Sonic</a></li>
+      <li><a href="https://www.coolmathgames.com/" target="_blank">Cool Math Games</a></li>
+      <li><a href="https://www.mathsisfun.com/games/plumber-game.html" target="_blank">https://www.mathsisfun.com/games/plumber-game.html</a></li>
+  </ul>
+</div>
+
+<script>
+const translations = {
+  en: { title: "Math Game", numQuestionsLabel: "Number of questions:", maxNumberLabel: "Maximum number:", additionLabel: "Addition", subtractionLabel: "Subtraction", multiplicationLabel: "Multiplication", divisionLabel: "Division", languageLabel: "Language:", start: "Start", check: "Check", correct: "Correct!", wrong: "Wrong, try again.", finished: "All questions answered correctly!" },
+  fr: { title: "Jeu de Maths", numQuestionsLabel: "Nombre de questions:", maxNumberLabel: "Nombre maximum:", additionLabel: "Addition", subtractionLabel: "Soustraction", multiplicationLabel: "Multiplication", divisionLabel: "Division", languageLabel: "Langue:", start: "Démarrer", check: "Vérifier", correct: "Correct!", wrong: "Faux, réessayez.", finished: "Toutes les questions ont été répondues correctement!" },
+  hy: { title: "Մաթեմատիկայի խաղ", numQuestionsLabel: "Հարցերի քանակ:", maxNumberLabel: "Առավելագույն թիվ:", additionLabel: "Գումարում", subtractionLabel: "Հանում", multiplicationLabel: "Բազմապատկում", divisionLabel: "Բաժանում", languageLabel: "Լեզու:", start: "Սկսել", check: "Ստուգել", correct: "Ճիշտ է!", wrong: "Սխալ է, փորձեք նորից:", finished: "Բոլոր հարցերը ճիշտ են պատասխանված!" },
+  ru: { title: "Математическая игра", numQuestionsLabel: "Количество вопросов:", maxNumberLabel: "Максимальное число:", additionLabel: "Сложение", subtractionLabel: "Вычитание", multiplicationLabel: "Умножение", divisionLabel: "Деление", languageLabel: "Язык:", start: "Начать", check: "Проверить", correct: "Правильно!", wrong: "Неправильно, попробуйте еще раз.", finished: "Все вопросы отвечены правильно!" }
+};
+
+let problems = [], current = 0, correct = 0, incorrect = 0;
+
+function generateProblems(n, maxNum, ops) {
+  const list = [];
+  const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+  for (let i = 0; i < n; i++) {
+    let a, b, op, res;
+    do {
+      op = rand(ops);
+      a = Math.floor(Math.random() * maxNum) + 2;
+      b = Math.floor(Math.random() * maxNum) + 2;
+      if (op === '+') res = a + b;
+      if (op === '-') { if (a === b) continue; res = a - b; }
+      if (op === '*') res = a * b;
+      if (op === '/') {
+        b = rand([...Array(maxNum - 1).keys()].map(x => x + 2).filter(x => a % x === 0));
+        if (!b) continue;
+        if (a === b) continue;
+        res = a / b;
+      }
+    } while (res === undefined);
+    list.push({ q: `${a} ${op} ${b}`, a: res });
+  }
+  return list;
+}
+
+function updateLanguage() {
+  const lang = document.getElementById("language").value;
+  const t = translations[lang];
+  document.getElementById("title").innerText = t.title;
+  document.getElementById("numQuestionsLabel").innerText = t.numQuestionsLabel;
+  document.getElementById("maxNumberLabel").innerText = t.maxNumberLabel;
+  document.getElementById("additionLabel").innerText = t.additionLabel;
+  document.getElementById("subtractionLabel").innerText = t.subtractionLabel;
+  document.getElementById("multiplicationLabel").innerText = t.multiplicationLabel;
+  document.getElementById("divisionLabel").innerText = t.divisionLabel;
+  document.getElementById("languageLabel").innerText = t.languageLabel;
+  document.getElementById("startBtn").innerText = t.start;
+  document.getElementById("checkBtn").innerText = t.check;
+}
+
+document.getElementById("language").addEventListener("change", updateLanguage);
+updateLanguage();
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const n = +document.getElementById("numQuestions").value;
+  const maxNum = +document.getElementById("maxNumber").value;
+  const ops = [];
+  if (document.getElementById("addition").checked) ops.push('+');
+  if (document.getElementById("subtraction").checked) ops.push('-');
+  if (document.getElementById("multiplication").checked) ops.push('*');
+  if (document.getElementById("division").checked) ops.push('/');
+  if (!ops.length) return alert("Select at least one operation");
+  problems = generateProblems(n, maxNum, ops);
+  current = correct = incorrect = 0;
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  document.getElementById("progress").style.display = "block";
+  nextQuestion();
+});
+
+function nextQuestion() {
+  if (current >= problems.length) {
+    document.getElementById("result").innerText = translations[document.getElementById("language").value].finished;
+    document.getElementById("links").style.display = "block";
+    return;
+  }
+  document.getElementById("question").innerText = problems[current].q;
+  document.getElementById("answer").value = "";
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("status").innerText = `✔ ${correct} | ✘ ${incorrect} | ➡ ${problems.length - current}`;
+}
+
+function updateBars() {
+  let correctPct = problems.length ? (correct / problems.length) * 100 : 0;
+  let incorrectPct = problems.length ? (incorrect / problems.length) * 100 : 0;
+  document.getElementById("correctBar").style.width = correctPct + "%";
+  document.getElementById("correctBar").innerText = Math.round(correctPct) + "%";
+  document.getElementById("incorrectBar").style.width = incorrectPct + "%";
+  document.getElementById("incorrectBar").innerText = Math.round(incorrectPct) + "%";
+  document.getElementById("correctCount").innerText = correct;
+  document.getElementById("incorrectCount").innerText = incorrect;
+}
+
+function checkAnswer() {
+  const lang = document.getElementById("language").value;
+  const ans = +document.getElementById("answer").value;
+  if (ans === problems[current].a) {
+    correct++;
+    current++;
+    updateBars();
+    nextQuestion();
+  } else {
+    incorrect++;
+    document.getElementById("feedback").innerText = translations[lang].wrong;
+    document.getElementById("feedback").classList.add("wrong");
+    updateBars();
+  }
+}
+
+document.getElementById("checkBtn").addEventListener("click", checkAnswer);
+document.getElementById("answer").addEventListener("keypress", e => { if (e.key === "Enter") checkAnswer(); });
+</script>
+</body>
+</html>
