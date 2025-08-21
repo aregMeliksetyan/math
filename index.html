@@ -11,7 +11,7 @@
   .bar-container { width: 100%; background: #ddd; margin: 5px 0; height: 25px; border-radius: 5px; overflow: hidden; }
   .bar { height: 100%; text-align: center; color: white; line-height: 25px; white-space: nowrap; }
   .correct-bar { background: green; }
-  .incorrect-bar { background: red; }
+  /* .incorrect-bar removed (no longer used) */
   #question { font-size: 40px; font-weight: bold; color: #0077cc; }
 </style>
 </head>
@@ -53,9 +53,9 @@
   <div id="progress">
     <div>✅ <span id="correctCount">0</span></div>
     <div class="bar-container"><div class="bar correct-bar" id="correctBar" style="width:0%">0%</div></div>
-    
+
+    <!-- Keep incorrect count text, remove bar -->
     <div>❌ <span id="incorrectCount">0</span></div>
-    <div class="bar-container"><div class="bar incorrect-bar" id="incorrectBar" style="width:0%">0%</div></div>
   </div>
 </div>
 
@@ -160,13 +160,10 @@ function nextQuestion() {
 
 function updateBars() {
   let correctPct = problems.length ? (correct / problems.length) * 100 : 0;
-  let incorrectPct = problems.length ? (incorrect / problems.length) * 100 : 0;
   document.getElementById("correctBar").style.width = correctPct + "%";
   document.getElementById("correctBar").innerText = Math.round(correctPct) + "%";
-  document.getElementById("incorrectBar").style.width = incorrectPct + "%";
-  document.getElementById("incorrectBar").innerText = Math.round(incorrectPct) + "%";
   document.getElementById("correctCount").innerText = correct;
-  document.getElementById("incorrectCount").innerText = incorrect;
+  document.getElementById("incorrectCount").innerText = incorrect; // keep count only
 }
 
 function checkAnswer() {
