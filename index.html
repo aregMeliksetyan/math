@@ -14,7 +14,7 @@
 </style>
 </head>
 <body>
-<h1 id="title">Math Game</h1>
+<h1 id="title">Math Game 2025-08-21 v 1.0.0</h1>
 
 <label id="numQuestionsLabel">Number of questions:</label>
 <input type="number" id="numQuestions" min="1" value="5"><br><br>
@@ -86,8 +86,8 @@ function generateProblems(n, maxNum, ops) {
     let a, b, op, res;
     do {
       op = rand(ops);
-      a = Math.floor(Math.random() * maxNum) + 2;
-      b = Math.floor(Math.random() * maxNum) + 2;
+      a = Math.floor(Math.random() * (maxNum - 1)) + 2;
+      b = Math.floor(Math.random() * (maxNum - 1)) + 2;
       if (op === '+') res = a + b;
       if (op === '-') { if (a === b) continue; res = a - b; }
       if (op === '*') res = a * b;
