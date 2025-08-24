@@ -23,29 +23,13 @@
     z-index: 9999;
     display: none;
   }
-
-  /* Confetti container */
-  .confetti {
-    position: fixed;
-    top: -10px;
-    width: 10px;
-    height: 10px;
-    background-color: red;
-    z-index: 10000;
-    animation: fall 4s linear forwards;
-  }
-
-  @keyframes fall {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(100vh); opacity: 0; }
-  }
 </style>
 </head>
 <body>
 <canvas id="fireworksCanvas"></canvas>
 
 <h1 id="title">Math Game</h1>
-<div id="version">2025-08-23 v1.0.4</div>
+<div id="version">2025-08-21 v1.0.3</div>
 
 <label id="numQuestionsLabel">Number of questions:</label>
 <input type="number" id="numQuestions" min="1" value="5"><br><br>
@@ -81,6 +65,7 @@
   <div id="progress">
     <div>✅ <span id="correctCount">0</span></div>
     <div class="bar-container"><div class="bar correct-bar" id="correctBar" style="width:0%">0%</div></div>
+    <!-- Keep incorrect count text, no bar -->
     <div>❌ <span id="incorrectCount">0</span></div>
   </div>
 </div>
@@ -97,10 +82,6 @@
       <li><a href="https://www.mathsisfun.com/games/plumber-game.html" target="_blank">Plumber Game</a></li>
   </ul>
 </div>
-
-<!-- Audio elements -->
-<audio id="fireworkSound" src="https://actions.google.com/sounds/v1/fireworks/fireworks_burst.ogg"></audio>
-<audio id="applauseSound" src="https://actions.google.com/sounds/v1/ambiences/crowd_cheer.ogg"></audio>
 
 <script>
 const translations = {
@@ -126,7 +107,7 @@ function generateProblems(n, maxNum, ops) {
       if (op === '*') res = a * b;
       if (op === '/') {
         let divisors = Array.from({length: maxNum - 1}, (_, k) => k + 2).filter(x => a % x === 0);
-        divisors = divisors.filter(x => x !== a);
+        divisors = divisors.filter(x => x !== a); // avoid a/a
         if (!divisors.length) continue;
         b = rand(divisors);
         res = a / b;
@@ -181,9 +162,7 @@ function nextQuestion() {
     document.getElementById("result").innerText =
       translations[document.getElementById("language").value].finished;
     document.getElementById("links").style.display = "block";
-    launchFireworks(4000);
-    launchConfetti();
-    document.getElementById("applauseSound").play();
+    launchFireworks(2500); // 5 seconds show
     return;
   }
   document.getElementById("question").innerText = problems[current].q;
@@ -196,7 +175,7 @@ function updateBars() {
   document.getElementById("correctBar").style.width = correctPct + "%";
   document.getElementById("correctBar").innerText = Math.round(correctPct) + "%";
   document.getElementById("correctCount").innerText = correct;
-  document.getElementById("incorrectCount").innerText = incorrect;
+  document.getElementById("incorrectCount").innerText = incorrect; // count only
 }
 
 function checkAnswer() {
@@ -218,15 +197,12 @@ function checkAnswer() {
 document.getElementById("checkBtn").addEventListener("click", checkAnswer);
 document.getElementById("answer").addEventListener("keypress", e => { if (e.key === "Enter") checkAnswer(); });
 
-/* ---------------- Fireworks ---------------- */
+/* ---------------- FIREWORKS (robust, timed) ---------------- */
 function launchFireworks(durationMs = 4000) {
   const canvas = document.getElementById('fireworksCanvas');
   const ctx = canvas.getContext('2d');
-  const sound = document.getElementById('fireworkSound');
 
-  sound.currentTime = 0;
-  sound.play();
-
+  // Hi-DPI support and resize handling
   let dpr = Math.max(window.devicePixelRatio || 1, 1);
   function resize() {
     const w = window.innerWidth;
@@ -234,7 +210,7 @@ function launchFireworks(durationMs = 4000) {
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     canvas.style.display = 'block';
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
     ctx.scale(dpr, dpr);
   }
   resize();
@@ -261,20 +237,25 @@ function launchFireworks(durationMs = 4000) {
     }
   }
 
+  // Keep animating for a fixed time window; don't stop early when no particles yet.
   const start = performance.now();
   const end = start + durationMs;
-  spawnBurst();
+
+  // Spawn bursts periodically
+  spawnBurst(); // immediate so animation has content from frame 1
   const interval = setInterval(spawnBurst, 450);
 
   (function frame(now) {
+    // Dim previous frame for trails
     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
+    // Update and draw particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.03;
+      p.vy += 0.03;     // gravity
       p.life -= p.decay;
 
       if (p.life <= 0) { particles.splice(i, 1); continue; }
@@ -287,32 +268,21 @@ function launchFireworks(durationMs = 4000) {
       ctx.globalAlpha = 1;
     }
 
-    if (now < end || particles.length > 0) {
+    const timeUp = now >= end;
+    if (!timeUp) {
+      requestAnimationFrame(frame);
+    } else if (particles.length > 0) {
+      // Stop spawning but keep animating until all particles fade
+      clearInterval(interval);
       requestAnimationFrame(frame);
     } else {
+      // Clean up
       clearInterval(interval);
-      sound.pause();
-      sound.currentTime = 0;
       canvas.style.display = 'none';
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       window.removeEventListener('resize', resize);
     }
   })(start);
-}
-
-/* ---------------- Confetti ---------------- */
-function launchConfetti() {
-  const colors = ['#f00','#0f0','#00f','#ff0','#f0f','#0ff','#ffa500'];
-  for (let i = 0; i < 100; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = Math.random() * window.innerWidth + 'px';
-    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.animationDuration = 3 + Math.random() * 2 + 's';
-    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-    document.body.appendChild(confetti);
-    setTimeout(() => confetti.remove(), 5000);
-  }
 }
 </script>
 </body>
